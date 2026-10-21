@@ -63,19 +63,12 @@ function injectStyles() {
 // ─────────────────────────────────────────────────────────────
 // profileLinks — buttons on a user's own profile page
 // (/profiles/<id>, /id/<vanity>): bp.tf, rep.tf, posts.tf,
-// steamdb.info, liquid.tf.
+// liquid.tf.
 // ─────────────────────────────────────────────────────────────
 const linksInfo = [
   { ...EXTERNAL_PROFILE_LINKS.bpTf, classes: ["btn_profile_action", "btn_medium"], dropdown_classes: ["popup_menu_item"] },
   { ...EXTERNAL_PROFILE_LINKS.repTf, classes: ["btn_profile_action", "btn_medium"], dropdown_classes: ["popup_menu_item"] },
   { ...EXTERNAL_PROFILE_LINKS.postsTf, classes: ["btn_profile_action", "btn_medium"], dropdown_classes: ["popup_menu_item"] },
-  {
-    label: "steamdb.info",
-    href: (id) => `https://steamdb.info/calculator/${id}`,
-    color: SITE_BRAND_COLORS.steamdb,
-    classes: ["btn_profile_action", "btn_medium"],
-    dropdown_classes: ["popup_menu_item"],
-  },
   { ...EXTERNAL_PROFILE_LINKS.liquidTf, classes: ["btn_profile_action", "btn_medium"], dropdown_classes: ["popup_menu_item"] },
 ];
 
