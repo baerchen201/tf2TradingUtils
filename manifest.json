@@ -19,12 +19,9 @@
     "default_title": "TF2TradingUtils"
   },
 
-  "permissions": ["declarativeNetRequest", "storage"],
+  "permissions": ["declarativeNetRequest", "storage", "management"],
   "host_permissions": ["https://steamcommunity.com/*"],
 
-  "background": {
-    "service_worker": "background.js"
-  },
 
   "content_scripts": [
     {

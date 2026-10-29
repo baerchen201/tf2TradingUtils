@@ -9,9 +9,9 @@ import { SITE_BRAND_COLORS } from "../../utils/constants/colors.js";
 // SITE_BRAND_COLORS palette other injected UI in this extension uses.
 // ─────────────────────────────────────────────────────────────
 const EXTERNAL_PROFILE_LINKS = {
-  bpTf:     { label: "bp.tf", href: (id) => `https://backpack.tf/profiles/${id}`, color: SITE_BRAND_COLORS.backpackTf },
-  repTf:    { label: "rep.tf", href: (id) => `https://rep.tf/${id}`, color: SITE_BRAND_COLORS.repTf },
-  postsTf:  { label: "posts.tf", href: (id) => `https://posts.tf/users/${id}`, color: SITE_BRAND_COLORS.postsTf },
+  bpTf: { label: "bp.tf", href: (id) => `https://backpack.tf/profiles/${id}`, color: SITE_BRAND_COLORS.backpackTf },
+  repTf: { label: "rep.tf", href: (id) => `https://rep.tf/${id}`, color: SITE_BRAND_COLORS.repTf },
+  postsTf: { label: "posts.tf", href: (id) => `https://posts.tf/users/${id}`, color: SITE_BRAND_COLORS.postsTf },
   liquidTf: { label: "liquid.tf", href: (id) => `https://liquid.tf/store/${id}`, color: SITE_BRAND_COLORS.liquidTf },
 };
 
@@ -70,7 +70,54 @@ const linksInfo = [
   { ...EXTERNAL_PROFILE_LINKS.repTf, classes: ["btn_profile_action", "btn_medium"], dropdown_classes: ["popup_menu_item"] },
   { ...EXTERNAL_PROFILE_LINKS.postsTf, classes: ["btn_profile_action", "btn_medium"], dropdown_classes: ["popup_menu_item"] },
   { ...EXTERNAL_PROFILE_LINKS.liquidTf, classes: ["btn_profile_action", "btn_medium"], dropdown_classes: ["popup_menu_item"] },
+  {
+    label: "steamdb.info",
+    href: (id) => `https://steamdb.info/calculator/${id}`,
+    color: SITE_BRAND_COLORS.steamdb,
+    classes: ["btn_profile_action", "btn_medium"],
+    dropdown_classes: ["popup_menu_item"],
+    condition: () => new Promise((resolve, reject) => {
+      if (chrome && chrome.management && chrome.management.get)
+      {
+        resolve();
+        return;
+        chrome.management.get(null).then((extension) => extension.enabled ? reject() : resolve(), resolve); // TODO: fill chrome extension id (idk i use firefox)
+      }
+      else if (browser.management && browser.management.get) // TODO: browser is always undefined here
+      {
+        browser.management.get("firefox-extension@steamdb.info").then((extension) => {
+            // extension found
+            if (extension.enabled)
+              reject(); // extension installed and enabled, don't add steamdb button
+            else
+              resolve(); // extension installed but disabled, add steamdb button? (idk, this would mean they have the extension but chose to disable it)
+          },
+          resolve // extension not found, add steamdb button
+        );
+      }
+      else
+      {
+        console.warn("[TF2TradingUtils]: Couldn't check for steamdb extension, adding steamdb link...");
+        resolve(); // no idea if extension exists, just add the button to be safe
+      }
+    })
+  }, // put the button with the condition last, so it always comes after the rest (browser.management.get is async so i have no choice but make condition an async function)
 ];
+
+function addButton(parent, label, href, color, classes) {
+  const link = document.createElement("a");
+  link.href = href;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer"; // safety for new tabs
+  link.classList.add(...classes, ACCENT_CLASS);
+  link.style.setProperty("--tf2utils-accent", color);
+
+  const span = document.createElement("span");
+  span.textContent = label;
+
+  link.appendChild(span);
+  parent.appendChild(link);
+}
 
 export function profileLinks() {
   let url = window.location.toString(); // Get the url of the page
@@ -115,35 +162,25 @@ export function profileLinks() {
 
   //Verify if has the drowpdown menu nt he profile header actions
   if (locationButtonsDrowdown !== null) {
-    linksInfo.forEach(({ label, href, color, dropdown_classes }) => {
-      const link = document.createElement("a");
-      link.href = href(steamid64);
-      link.target = "_blank";
-      link.rel = "noopener noreferrer"; // good practice
-      link.classList.add(...dropdown_classes, ACCENT_CLASS);
-      link.style.setProperty("--tf2utils-accent", color);
-
-      const span = document.createElement("span");
-      span.textContent = label;
-
-      link.appendChild(span);
-      locationButtonsDrowdownList.appendChild(link);
+    linksInfo.forEach(({ label, href, color, dropdown_classes, condition }) => {
+      if (!condition)
+        addButton(locationButtonsDrowdownList, label, href(steamid64), color, dropdown_classes);
+      else
+        condition().then(() => {
+          // i could write some complicated code here to ensure a consistent ordering of the buttons,
+          // but this is only used once right now and i don't really wanna sit here for 3 more hours
+          addButton(locationButtonsDrowdownList, label, href(steamid64), color, dropdown_classes);
+        });
     });
   } else {
     //If doenst have the dropdown
-    linksInfo.forEach(({ label, href, color, classes }) => {
-      const link = document.createElement("a");
-      link.href = href(steamid64);
-      link.target = "_blank";
-      link.rel = "noopener noreferrer"; // safety for new tabs
-      link.classList.add(...classes, ACCENT_CLASS);
-      link.style.setProperty("--tf2utils-accent", color);
-
-      const span = document.createElement("span");
-      span.textContent = label;
-
-      link.appendChild(span);
-      locationButtons.appendChild(link);
+    linksInfo.forEach(({ label, href, color, classes, condition }) => {
+      if (!condition)
+        addButton(locationButtons, label, href(steamid64), color, classes);
+      else
+        condition().then(() => {
+          addButton(locationButtons, label, href(steamid64), color, classes);
+        });
     });
   }
 }
